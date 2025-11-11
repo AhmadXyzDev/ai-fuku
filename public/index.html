@@ -192,18 +192,14 @@
             border: 1px solid #ffcdd2;
         }
         
-        .status-indicator {
-            padding: 5px 10px;
-            background: #e8f5e8;
-            color: #2e7d32;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin: 0 20px;
-        }
-        
-        .status-indicator.error {
-            background: #ffebee;
-            color: #c62828;
+        .info-message {
+            align-self: center;
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+            text-align: center;
+            font-size: 0.9rem;
+            max-width: 90%;
         }
         
         @media (max-width: 600px) {
@@ -222,24 +218,17 @@
     <div class="chat-container">
         <div class="chat-header">
             <h1>Chat AI Fukushima</h1>
-            <p>Dibuat oleh AhmadXyz - Deployed di Vercel</p>
+            <p>Dibuat oleh AhmadXyz</p>
         </div>
-        
-        <div class="status-indicator" id="statusIndicator">
-            ✅ Terhubung ke Backend Vercel
-        </div>
-        
         <div class="chat-messages" id="chatMessages">
             <div class="message ai-message">
                 Halo! Nama saya Fukushima. Saya diciptakan oleh AhmadXyz. Ada yang bisa saya bantu?
                 <div class="message-time">Sekarang</div>
             </div>
         </div>
-        
         <div class="typing-indicator" id="typingIndicator">
             Fukushima sedang mengetik<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
         </div>
-        
         <div class="chat-input-container">
             <input type="text" class="chat-input" id="chatInput" placeholder="Ketik pesan Anda di sini...">
             <button class="send-button" id="sendButton">
@@ -257,10 +246,10 @@
             const chatInput = document.getElementById('chatInput');
             const sendButton = document.getElementById('sendButton');
             const typingIndicator = document.getElementById('typingIndicator');
-            const statusIndicator = document.getElementById('statusIndicator');
             
-            // URL API backend di Vercel
-            const API_URL = '/api/chat';
+            // Konfigurasi API
+            const API_BASE_URL = 'https://api.nekolabs.web.id/ai/gpt/4o-mini';
+            const SYSTEM_PROMPT = 'Nama kamu adalah Fukushima yang di ciptakan oleh AhmadXyz';
             
             // Fungsi untuk mendapatkan waktu saat ini
             function getCurrentTime() {
@@ -288,53 +277,61 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
             
-            // Fungsi untuk update status
-            function updateStatus(message, isError = false) {
-                statusIndicator.textContent = message;
-                if (isError) {
-                    statusIndicator.classList.add('error');
-                } else {
-                    statusIndicator.classList.remove('error');
-                }
-            }
-            
-            // Fungsi untuk mengirim pesan ke backend
+            // Fungsi untuk mengirim pesan ke API Fukushima
             async function sendMessageToAPI(message) {
                 try {
                     // Menampilkan indikator typing
                     typingIndicator.style.display = 'block';
                     chatMessages.scrollTop = chatMessages.scrollHeight;
-                    updateStatus('Mengirim ke Fukushima...');
                     
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ message })
+                    // Membuat URL dengan parameter
+                    const params = new URLSearchParams({
+                        text: message,
+                        systemPrompt: SYSTEM_PROMPT
                     });
-
+                    
+                    const apiUrl = `${API_BASE_URL}?${params}`;
+                    
+                    console.log('Mengirim request ke:', apiUrl);
+                    
+                    // Menggunakan fetch dengan timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout 10 detik
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
+                    
                     const data = await response.json();
                     
                     // Menyembunyikan indikator typing
                     typingIndicator.style.display = 'none';
                     
-                    if (data.success) {
-                        updateStatus('✅ Berhasil terhubung');
+                    if (data.success && data.result) {
                         return data.result;
                     } else {
-                        throw new Error(data.error || 'Response tidak valid');
+                        throw new Error('Response tidak valid dari API');
                     }
                     
                 } catch (error) {
                     console.error('Error:', error);
                     typingIndicator.style.display = 'none';
-                    updateStatus('❌ Error: ' + error.message, true);
-                    return "Maaf, terjadi kesalahan saat menghubungi Fukushima AI. Silakan refresh halaman dan coba lagi.";
+                    
+                    if (error.name === 'AbortError') {
+                        return "Maaf, waktu permintaan habis. Silakan coba lagi.";
+                    }
+                    
+                    return "Maaf, terjadi kesalahan saat menghubungi server Fukushima. Silakan coba lagi nanti.";
                 }
             }
             
@@ -378,6 +375,11 @@
             
             // Fokus ke input saat halaman dimuat
             chatInput.focus();
+            
+            // Tambahkan pesan selamat datang
+            setTimeout(() => {
+                addMessage("Selamat datang! Anda dapat berbicara dengan Fukushima AI. Ketik pesan Anda dan tekan Enter untuk mengirim.", false, false);
+            }, 1000);
         });
     </script>
 </body>
