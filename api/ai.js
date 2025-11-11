@@ -1,93 +1,55 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const router = express.Router();
+const app = express();
 
-router.get('/', async (req, res) => {
+app.use(express.json());
+
+// router kamu
+app.get('/', async (req, res) => {
   try {
     const { text, systemPrompt = 'Kamu adalah asisten AI yang membantu' } = req.query;
-    
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Parameter text diperlukan'
-      });
-    }
+    if (!text) return res.status(400).json({ success: false, error: 'Parameter text diperlukan' });
 
     const startTime = Date.now();
-    
-    // Encode parameters untuk URL
-    const encodedText = encodeURIComponent(text);
-    const encodedPrompt = encodeURIComponent(systemPrompt);
-    
-    const apiUrl = `https://api.nekolabs.web.id/ai/gpt/4.1-mini?text=${encodedText}&systemPrompt=${encodedPrompt}`;
-    
+    const apiUrl = `https://api.nekolabs.web.id/ai/gpt/4.1-mini?text=${encodeURIComponent(text)}&systemPrompt=${encodeURIComponent(systemPrompt)}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
-    
+
     const responseTime = Date.now() - startTime;
-    
-    // Format response sesuai dengan contoh
-    const formattedResponse = {
+    res.json({
       success: true,
       result: data.result || data.message || 'Tidak ada response',
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`
-    };
-    
-    res.json(formattedResponse);
-    
+    });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Terjadi kesalahan pada server',
-      timestamp: new Date().toISOString()
-    });
+    res.status(500).json({ success: false, error: 'Terjadi kesalahan pada server' });
   }
 });
 
-router.post('/', async (req, res) => {
+app.post('/', async (req, res) => {
   try {
     const { text, systemPrompt = 'Kamu adalah asisten AI yang membantu' } = req.body;
-    
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Parameter text diperlukan'
-      });
-    }
+    if (!text) return res.status(400).json({ success: false, error: 'Parameter text diperlukan' });
 
     const startTime = Date.now();
-    
-    // Encode parameters untuk URL
-    const encodedText = encodeURIComponent(text);
-    const encodedPrompt = encodeURIComponent(systemPrompt);
-    
-    const apiUrl = `https://api.nekolabs.web.id/ai/gpt/4.1-mini?text=${encodedText}&systemPrompt=${encodedPrompt}`;
-    
+    const apiUrl = `https://api.nekolabs.web.id/ai/gpt/4.1-mini?text=${encodeURIComponent(text)}&systemPrompt=${encodeURIComponent(systemPrompt)}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
-    
+
     const responseTime = Date.now() - startTime;
-    
-    // Format response
-    const formattedResponse = {
+    res.json({
       success: true,
       result: data.result || data.message || 'Tidak ada response',
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`
-    };
-    
-    res.json(formattedResponse);
-    
+    });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Terjadi kesalahan pada server',
-      timestamp: new Date().toISOString()
-    });
+    res.status(500).json({ success: false, error: 'Terjadi kesalahan pada server' });
   }
 });
 
-module.exports = router;
+// ini penting ⤵️
+module.exports = app;
