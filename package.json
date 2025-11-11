@@ -1,11 +1,19 @@
 {
-  "name": "fukushima-chat",
+  "name": "chat-ai-gpt",
   "version": "1.0.0",
-  "description": "Chat AI Fukushima deployed on Vercel",
+  "description": "Chat AI mirip ChatGPT dengan API nekolabs",
+  "main": "index.js",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "node index.js",
+    "start": "node index.js"
   },
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }
