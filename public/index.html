@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI Fukushima</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(90deg, #4a6cf7, #6a11cb);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .chat-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #4a6cf7, #6a11cb);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.7;
+            text-align: right;
+        }
+        
+        .chat-input-container {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            background-color: white;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .chat-input:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2);
+        }
+        
+        .send-button {
+            background: linear-gradient(90deg, #4a6cf7, #6a11cb);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(74, 108, 247, 0.4);
+        }
+        
+        .send-button:active {
+            transform: scale(0.98);
+        }
+        
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: white;
+            color: #666;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            font-style: italic;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+        }
+        
+        .typing-dots span {
+            animation: typing 1.4s infinite;
+            display: inline-block;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .error-message {
+            align-self: flex-start;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .status-indicator {
+            padding: 5px 10px;
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin: 0 20px;
+        }
+        
+        .status-indicator.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Chat AI Fukushima</h1>
+            <p>Dibuat oleh AhmadXyz - Deployed di Vercel</p>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+            ✅ Terhubung ke Backend Vercel
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">
+                Halo! Nama saya Fukushima. Saya diciptakan oleh AhmadXyz. Ada yang bisa saya bantu?
+                <div class="message-time">Sekarang</div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            Fukushima sedang mengetik<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ketik pesan Anda di sini...">
+            <button class="send-button" id="sendButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const typingIndicator = document.getElementById('typingIndicator');
+            const statusIndicator = document.getElementById('statusIndicator');
+            
+            // URL API backend di Vercel
+            const API_URL = '/api/chat';
+            
+            // Fungsi untuk mendapatkan waktu saat ini
+            function getCurrentTime() {
+                const now = new Date();
+                return now.getHours().toString().padStart(2, '0') + ':' + 
+                       now.getMinutes().toString().padStart(2, '0');
+            }
+            
+            // Fungsi untuk menambahkan pesan ke chat
+            function addMessage(message, isUser = false, isError = false) {
+                const messageDiv = document.createElement('div');
+                
+                if (isError) {
+                    messageDiv.className = 'message error-message';
+                } else {
+                    messageDiv.className = isUser ? 'message user-message' : 'message ai-message';
+                }
+                
+                messageDiv.innerHTML = `
+                    ${message}
+                    <div class="message-time">${getCurrentTime()}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Fungsi untuk update status
+            function updateStatus(message, isError = false) {
+                statusIndicator.textContent = message;
+                if (isError) {
+                    statusIndicator.classList.add('error');
+                } else {
+                    statusIndicator.classList.remove('error');
+                }
+            }
+            
+            // Fungsi untuk mengirim pesan ke backend
+            async function sendMessageToAPI(message) {
+                try {
+                    // Menampilkan indikator typing
+                    typingIndicator.style.display = 'block';
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    updateStatus('Mengirim ke Fukushima...');
+                    
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Menyembunyikan indikator typing
+                    typingIndicator.style.display = 'none';
+                    
+                    if (data.success) {
+                        updateStatus('✅ Berhasil terhubung');
+                        return data.result;
+                    } else {
+                        throw new Error(data.error || 'Response tidak valid');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    typingIndicator.style.display = 'none';
+                    updateStatus('❌ Error: ' + error.message, true);
+                    return "Maaf, terjadi kesalahan saat menghubungi Fukushima AI. Silakan refresh halaman dan coba lagi.";
+                }
+            }
+            
+            // Fungsi untuk menangani pengiriman pesan
+            async function handleSendMessage() {
+                const message = chatInput.value.trim();
+                
+                if (message === '') return;
+                
+                // Menambahkan pesan pengguna
+                addMessage(message, true);
+                
+                // Mengosongkan input
+                chatInput.value = '';
+                
+                // Nonaktifkan input sementara
+                chatInput.disabled = true;
+                sendButton.disabled = true;
+                
+                // Mengirim pesan ke API dan mendapatkan respons
+                const response = await sendMessageToAPI(message);
+                
+                // Menambahkan respons AI
+                addMessage(response);
+                
+                // Mengaktifkan input kembali
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.focus();
+            }
+            
+            // Event listener untuk tombol kirim
+            sendButton.addEventListener('click', handleSendMessage);
+            
+            // Event listener untuk menekan Enter di input
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSendMessage();
+                }
+            });
+            
+            // Fokus ke input saat halaman dimuat
+            chatInput.focus();
+        });
+    </script>
+</body>
+</html>
