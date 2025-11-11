@@ -1,0 +1,10 @@
+{
+  "name": "fukushima-chat",
+  "version": "1.0.0",
+  "description": "Chat AI Fukushima deployed on Vercel",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
